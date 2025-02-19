@@ -7,17 +7,36 @@ const {
 } = require("../utils/errors");
 const { userExtractor } = require("../utils/middleware");
 const blogRouter = new Router();
+const { Op } = require("sequelize");
 
 blogRouter.use(userExtractor);
 
 blogRouter.get("/", async (req, res, next) => {
   try {
+    const where = {};
+    if (req.query.search) {
+      const search = req.query.search;
+      where[Op.or] = [
+        {
+          title: {
+            [Op.iLike]: `%${search}%`,
+          },
+        },
+        {
+          author: {
+            [Op.iLike]: `%${search}%`,
+          },
+        },
+      ];
+    }
     const blogs = await Blog.findAll({
       attributes: { exclude: ["userId"] },
       include: {
         model: User,
         attributes: ["name"],
       },
+      where,
+      order: [["likes", "DESC"]],
     });
     res.status(200).json(blogs);
   } catch (e) {

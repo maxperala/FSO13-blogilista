@@ -5,12 +5,14 @@ const { connect } = require("./utils/db");
 const { blogRouter } = require("./routers/blogRouter");
 const { userRouter } = require("./routers/userRouter");
 const { loginRouter } = require("./routers/loginRouter");
+const { authorRouter } = require("./routers/authorRouter");
 const { errorHandler } = require("./utils/middleware");
 
 app.use(express.json());
 app.use("/api/blogs", blogRouter);
 app.use("/api/users", userRouter);
 app.use("/api/login", loginRouter);
+app.use("/api/authors", authorRouter);
 app.use(errorHandler);
 
 const launch = async () => {
