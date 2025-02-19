@@ -1,11 +1,24 @@
 const { Router } = require("express");
-const { Blog } = require("../models/index");
-const { InvalidAPIRequest, BlogNotFoundError } = require("../utils/errors");
+const { Blog, User } = require("../models/index");
+const {
+  InvalidAPIRequest,
+  BlogNotFoundError,
+  UserNotFoundError,
+} = require("../utils/errors");
+const { userExtractor } = require("../utils/middleware");
 const blogRouter = new Router();
+
+blogRouter.use(userExtractor);
 
 blogRouter.get("/", async (req, res, next) => {
   try {
-    const blogs = await Blog.findAll();
+    const blogs = await Blog.findAll({
+      attributes: { exclude: ["userId"] },
+      include: {
+        model: User,
+        attributes: ["name"],
+      },
+    });
     res.status(200).json(blogs);
   } catch (e) {
     next(e);
@@ -18,6 +31,7 @@ blogRouter.post("/", async (req, res, next) => {
     if (!data.title || !data.url)
       throw new InvalidAPIRequest("Please provide all parameters");
     const newBlog = Blog.build(data);
+    newBlog.userId = req.user.id;
     await newBlog.save();
     res.status(201).json(newBlog);
   } catch (e) {
