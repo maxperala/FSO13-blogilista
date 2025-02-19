@@ -34,6 +34,4 @@ Blog.init(
   }
 );
 
-Blog.sync();
-
-module.exports = { Blog };
+module.exports = Blog;
