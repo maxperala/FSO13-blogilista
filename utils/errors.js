@@ -47,6 +47,13 @@ class InvalidCredentialsError extends Error {
   }
 }
 
+class AccountDisabledError extends Error {
+  constructor() {
+    super("This account has been disabled!");
+    this.name = "AccountDisabledError";
+  }
+}
+
 module.exports = {
   InternalAPIError,
   BlogNotFoundError,
@@ -55,4 +62,5 @@ module.exports = {
   InvalidUserDataError,
   UserNotFoundError,
   InvalidCredentialsError,
+  AccountDisabledError,
 };

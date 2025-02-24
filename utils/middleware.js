@@ -7,10 +7,11 @@ const {
   InvalidUserDataError,
   UserNotFoundError,
   InvalidCredentialsError,
+  AccountDisabledError,
 } = require("./errors");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models/index");
-const { ValidationErrorItem, ValidationError } = require("sequelize");
+const { User, Session } = require("../models/index");
+const { ValidationError } = require("sequelize");
 
 const errorHandler = async (error, req, res, next) => {
   console.error(error);
@@ -54,6 +55,11 @@ const errorHandler = async (error, req, res, next) => {
       error: error.errors.map((e) => e.message).join(", "),
     });
   }
+  if (error instanceof AccountDisabledError) {
+    return res.status(400).json({
+      error: "Sorry, this account is temporarily disabled.",
+    });
+  }
   res.status(500).json({
     error: "An unknown error occurred",
   });
@@ -72,11 +78,27 @@ const userExtractor = async (req, res, next) => {
         username: verified.username,
       },
     });
+    if (user.disabled) throw new AccountDisabledError();
+    console.log(user);
     if (!user) throw new UserNotFoundError();
+    const session = await Session.findOne({
+      where: {
+        token: token,
+      },
+    });
+    if (!session) {
+      throw new NotAuthorizedError();
+    }
     req.user = user;
+    req.token = token;
     next();
   } catch (e) {
     console.error(e);
+    if (e instanceof AccountDisabledError) {
+      return res.status(400).json({
+        error: "Sorry, this account is temporarily disabled.",
+      });
+    }
     return res.status(401).json({ error: "Invalid or missing token!" });
   }
 };
